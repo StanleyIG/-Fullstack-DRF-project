@@ -32,11 +32,25 @@ class IsDeveloper(BasePermission):
     
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
+            if request.user in obj.users.all():
+                return True
+            else:
+                if request.method == 'GET':
+                    return True
+                
+# Админ может создавать проекты, может смотреть чужие
+# и удалять при необходимости, но не может их изменять
+class IsAdminReadDelete(BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_superuser:
             return True
-        if request.user == obj.user:
-            return True
-        return False
-       
+
+    def has_object_permission(self, request, view, obj):
+            if request.user.is_superuser:
+                if request.method in ('GET', 'DELETE'):
+                    return True
+                
+
     
    
     
@@ -88,12 +102,12 @@ class ProjectModelViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectModelSerializer
     #filterset_fields = ['name', 'users']
-    permission_classes = [IsProjectOwner | IsAdminUser | IsDeveloperReadOnly]
+    # permission_classes = [IsProjectOwner | IsAdminUser | IsDeveloperReadOnly]
+    permission_classes = [IsDeveloper | IsAdminReadDelete]
 
 
     def get_queryset(self):
         name = self.request.query_params.get('name', None)
-        print("Search name:", name)
         if name:
             return Project.objects.filter(name__icontains=name)
         return Project.objects.all()
@@ -123,7 +137,8 @@ class ToDoModelViewSet(ModelViewSet):
     pagination_class = ToDoLimitOffsetPagination
     queryset = ToDo.objects.filter(is_active=True)
     serializer_class = ToDoModelSerializer
-    permission_classes = [IsAdminUser | IsDeveloper | IsProjectOwner2]
+    # permission_classes = [IsAdminUser | IsDeveloper | IsProjectOwner2]
+    permission_classes = [IsAdminUser | IsDeveloper]
 
     def perform_destroy(self, instance):
         instance.is_active = False

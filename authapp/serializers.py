@@ -26,9 +26,11 @@ class UserModelBaseSerializer(ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             is_superuser=validated_data.get('is_superuser', False),
-            is_staff=validated_data.get('is_staff', False)
+            is_staff=validated_data.get('is_staff', False),
+            is_active = validated_data.get('is_active', False)
             )
         return user
+    
 
 
 
